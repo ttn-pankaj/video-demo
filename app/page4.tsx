@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-namespace */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -6,9 +5,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { FiX, FiDownload } from 'react-icons/fi';
 import { ImSpinner2 } from 'react-icons/im';
-import QuestionPopup from './QuestionPopup'; // Import the new component
-import VideoResources from './VideoResources';
 
 // Extend the Window interface to include onYouTubeIframeAPIReady
 declare global {
@@ -18,7 +17,7 @@ declare global {
 }
 
 // Declare the YT namespace to tell TypeScript about the YouTube Player API
-declare namespace YT {  
+declare namespace YT {
   class Player {
     constructor(elementId: string, options: PlayerOptions);
     playVideo(): void;
@@ -29,16 +28,6 @@ declare namespace YT {
 
   interface PlayerOptions {
     videoId: string;
-    playerVars?: {
-      controls?: number;
-      showinfo?: number;
-      modestbranding?: number;
-      rel?: number;
-      autoplay: number;
-      iv_load_policy?: number;
-      playsinline: number;
-      enablejsapi: number;
-    };
     events: {
       onReady: (event: PlayerEvent) => void;
       onStateChange: (event: PlayerEvent) => void;
@@ -92,6 +81,7 @@ const dummyVideoData: VideoData = {
     'https://imageuploads.blr1.digitaloceanspaces.com/DLVBC_instructor/education-66f191cf3dd22067291911e9-WhatsApp Image 2024-09-02 at 11.27.43.jpeg',
   videoTitle: 'Sample Educational Video',
   videoUrl: 'https://www.youtube.com/watch?v=qxhDQFr_RPE',
+  // videoUrl:'https://www.w3schools.com/html/mov_bbb.mp4',
   isSubmitSingleEveryTime: true,
   videoResources: [
     'https://pdfobject.com/pdf/sample.pdf',
@@ -134,7 +124,6 @@ const VideoWithQuestions = () => {
   const [collectedAnswers, setCollectedAnswers] = useState<any[]>([]);
   const [isVideoEnded, setIsVideoEnded] = useState<boolean>(false);
   const playerRef = useRef<YT.Player | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     const fetchVideoData = async () => {
@@ -151,7 +140,6 @@ const VideoWithQuestions = () => {
     fetchVideoData();
   }, [videoId]);
 
-  // YouTube Player setup
   useEffect(() => {
     if (videoData && isYouTubeUrl(videoData.videoUrl)) {
       const tag = document.createElement('script');
@@ -162,16 +150,6 @@ const VideoWithQuestions = () => {
       window.onYouTubeIframeAPIReady = () => {
         playerRef.current = new YT.Player('youtube-player', {
           videoId: extractYouTubeId(videoData.videoUrl),
-          playerVars: {
-            controls: 0,          // Hides controls completely
-            modestbranding: 1,    // Minimal YouTube branding
-            rel: 0,               // No related videos at the end
-            iv_load_policy: 3,    // Disables annotations
-            autoplay: 0,          // Auto-start the video
-            playsinline: 1,       // Play inline on mobile
-            showinfo: 0,          // (Deprecated) was used to hide title
-            enablejsapi: 1        // Enable JavaScript API for controlling the player
-          },
           events: {
             onReady: handlePlayerReady,
             onStateChange: handlePlayerStateChange,
@@ -209,11 +187,7 @@ const VideoWithQuestions = () => {
       if (question) {
         setCurrentQuestion(question);
         setIsModalOpen(true);
-        if (isYouTubeUrl(videoData.videoUrl)) {
-          playerRef.current?.pauseVideo();
-        } else {
-          videoRef.current?.pause();
-        }
+        playerRef.current?.pauseVideo();
       }
     }
   };
@@ -224,11 +198,7 @@ const VideoWithQuestions = () => {
       setCurrentQuestion(null);
       setAnsweredQuestions((prev) => new Set(prev.add(currentQuestion!.id)));
       if (!isVideoEnded) {
-        if (isYouTubeUrl(videoData!.videoUrl)) {
-          playerRef.current?.playVideo();
-        } else {
-          videoRef.current?.play();
-        }
+        playerRef.current?.playVideo();
       }
     }
   };
@@ -251,11 +221,7 @@ const VideoWithQuestions = () => {
       if (outOfRangeQuestion) {
         setCurrentQuestion(outOfRangeQuestion);
         setIsModalOpen(true);
-        if (isYouTubeUrl(videoData.videoUrl)) {
-          playerRef.current?.pauseVideo();
-        } else {
-          videoRef.current?.pause();
-        }
+        playerRef.current?.pauseVideo();
       }
     }
   };
@@ -288,91 +254,121 @@ const VideoWithQuestions = () => {
           setCollectedAnswers((prev) => [...prev, payload]);
         }
 
-        // Close modal after submission
         setIsModalOpen(false);
-        setAnsweredQuestions((prev) => new Set(prev.add(currentQuestion.id)));
-        setCurrentQuestion(null);
+        setAnsweredQuestions((prev) => new Set(prev.add(currentQuestion!.id)));
         setSelectedAnswers([]);
-
-        // Continue playing the video after submitting
+        setCurrentQuestion(null);
         if (!isVideoEnded) {
-          if (isYouTubeUrl(videoData!.videoUrl)) {
-            playerRef.current?.playVideo();
-          } else {
-            videoRef.current?.play();
-          }
+          playerRef.current?.playVideo();
         }
       } catch (err) {
-        setError('Error submitting answer.');
-        console.error('Error during submission:', err); // Logging the error
+        setError('Error submitting answers.');
       } finally {
         setSubmitLoading(false);
       }
     }
   };
 
-
-  const isYouTubeUrl = (url: string): boolean => {
-    const youtubeRegex = /^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/;
-    return youtubeRegex.test(url);
+  const handleDownload = (url: string) => {
+    window.open(url, '_blank');
   };
 
-  const extractYouTubeId = (url: string): string => {
-    const regex = /(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-    const match = url.match(regex);
+  const isYouTubeUrl = (url: string) => {
+    return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/.test(url);
+  };
+
+  const extractYouTubeId = (url: string) => {
+    const match = url.match(
+      /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    );
     return match ? match[1] : '';
   };
 
   return (
     <div className="container mx-auto p-4">
       {loading && (
-        <div className="flex justify-center items-center h-screen">
-          <ImSpinner2 className="animate-spin text-3xl" />
+        <div className="flex justify-center items-center">
+          <ImSpinner2 className="animate-spin h-10 w-10 text-gray-500" />
+        </div>
+      )}
+      {error && <p className="text-red-500">{error}</p>}
+      {!loading && videoData && (
+        <div className="space-y-4">
+          <h2 className="text-3xl font-semibold">{videoData.videoTitle}</h2>
+          <p dangerouslySetInnerHTML={{ __html: videoData.videoDescription }}></p>
+
+          {isYouTubeUrl(videoData.videoUrl) && (
+            <div className="aspect-w-16 aspect-h-9">
+              <div id="youtube-player"></div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {videoData.videoResources.map((resource, index) => (
+              <button
+                key={index}
+                onClick={() => handleDownload(resource)}
+                className="flex items-center space-x-2 text-blue-600 hover:underline"
+              >
+                <FiDownload />
+                <span>{resource.split('/').pop()}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
-      {error && <p className="text-red-500">{error}</p>}
-
-      {videoData && !loading && (
-        <>
-          <h1 className="text-3xl font-bold mb-4">{videoData.videoTitle}</h1>
-          {isYouTubeUrl(videoData.videoUrl) ? (
-            <div id="youtube-player" style={{ width: '100%', height: '500px' }} />
-          ) : (
-            <video
-              ref={videoRef}
-              width="100%"
-              height="500px"
-              controls
-              src={videoData.videoUrl}
-              onTimeUpdate={(e) => {
-                const time = Math.floor((e.target as HTMLVideoElement).currentTime);
-                setCurrentTime(time);
-                handleQuestionPopup(time);
-              }}
-              onEnded={handleVideoEnd}
-            />
-          )}
-          
-          <div className="mt-4">
-            <h2 className="text-xl font-semibold">Description:</h2>
-            <div className="mt-2" dangerouslySetInnerHTML={{ __html: videoData.videoDescription }} />
+      {isModalOpen && currentQuestion && (
+        <motion.div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <div className="bg-white p-6 rounded-lg shadow-lg space-y-4 max-w-lg w-full">
+            {!currentQuestion.closeable && (
+              <button
+                onClick={closeModal}
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+              >
+                <FiX />
+              </button>
+            )}
+            <h3 className="text-xl font-bold">{currentQuestion.question}</h3>
+            <ul className="space-y-2">
+              {currentQuestion.options.map((option) => (
+                <li key={option}>
+                  <button
+                    onClick={() => handleAnswerSelect(option)}
+                    className={`block w-full text-left p-2 border rounded-lg ${
+                      selectedAnswers.includes(option)
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white text-black border-gray-300'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={closeModal}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleSubmit}
+                className={`bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg ${
+                  submitLoading ? 'opacity-50' : ''
+                }`}
+                disabled={submitLoading}
+              >
+                {submitLoading ? 'Submitting...' : 'Submit'}
+              </button>
+            </div>
           </div>
-
-          {/* Use the VideoResources component here */}
-          <VideoResources resources={videoData.videoResources} />
-
-          {/* Questions Modal */}
-          <QuestionPopup
-            isOpen={isModalOpen}
-            question={currentQuestion}
-            selectedAnswers={selectedAnswers}
-            setSelectedAnswers={setSelectedAnswers}
-            handleSubmit={handleSubmit}
-            closeModal={closeModal}
-            submitLoading={submitLoading}
-          />
-        </>
+        </motion.div>
       )}
     </div>
   );

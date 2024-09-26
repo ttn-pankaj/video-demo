@@ -18,6 +18,32 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+
+  #youtube-player iframe {
+    pointer-events: none; /* Disable interaction if you want a completely passive view */
+  }
+  
+  /* Attempt to hide iframe overlay elements (not guaranteed) */
+  #youtube-player {
+    position: relative;
+  }
+  
+  #youtube-player iframe {
+    position: absolute;
+    top: -100%; /* Move iframe up to hide any visible elements */
+  }
+  
+  .ytp-chrome-top.ytp-show-cards-title {
+    display: none;
+  }
+  
+  a.ytp-impression-link {
+    display: none;
+  }
+  
+  .ytp-pause-overlay-container{
+    display: none;
+  }
 }
 
 @layer utilities {
@@ -25,3 +51,4 @@ body {
     text-wrap: balance;
   }
 }
+
