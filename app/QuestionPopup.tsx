@@ -1,13 +1,11 @@
-// QuestionPopup.tsx
-
 import React from 'react';
 import { motion } from 'framer-motion';
 
 type Question = {
   id: number;
   question: string;
-  options: string[];
-  type: 'mcq' | 'multi-select';
+  options?: string[]; // options are optional for fill-in-the-blanks and text input questions
+  type: 'mcq' | 'multi-select' | 'fill-in-the-blank' | 'text-input';
   closeable: boolean;
 };
 
@@ -42,6 +40,13 @@ const QuestionPopup: React.FC<QuestionPopupProps> = ({
     }
   };
 
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    if (question.type === 'fill-in-the-blank' || question.type === 'text-input') {
+      setSelectedAnswers([value]); // For fill-in-the-blank and text input, we replace previous answers
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -53,10 +58,10 @@ const QuestionPopup: React.FC<QuestionPopupProps> = ({
         <p className="mb-4">{question.question}</p>
 
         <div className="mb-4">
-          {question.options.map((option, index) => (
+          {question.type === 'mcq' && question.options && question.options.map((option, index) => (
             <div key={index} className="flex items-center mb-2">
               <input
-                type={question.type === 'mcq' ? 'radio' : 'checkbox'}
+                type="radio"
                 name="answers"
                 value={option}
                 checked={selectedAnswers.includes(option)}
@@ -66,6 +71,38 @@ const QuestionPopup: React.FC<QuestionPopupProps> = ({
               <label>{option}</label>
             </div>
           ))}
+
+          {question.type === 'multi-select' && question.options && question.options.map((option, index) => (
+            <div key={index} className="flex items-center mb-2">
+              <input
+                type="checkbox"
+                name="answers"
+                value={option}
+                checked={selectedAnswers.includes(option)}
+                onChange={() => handleAnswerSelect(option)}
+                className="mr-2"
+              />
+              <label>{option}</label>
+            </div>
+          ))}
+
+          {question.type === 'fill-in-the-blank' && (
+            <input
+              type="text"
+              placeholder="Fill in the blank..."
+              onChange={handleInputChange}
+              className="border p-2 w-full mb-4"
+            />
+          )}
+
+          {question.type === 'text-input' && (
+            <input
+              type="text"
+              placeholder="Enter your answer..."
+              onChange={handleInputChange}
+              className="border p-2 w-full mb-4"
+            />
+          )}
         </div>
 
         <div className="flex justify-end">

@@ -59,19 +59,13 @@ declare namespace YT {
     CUED = 5,
   }
 }
-type OptionsType = { text: string; }
-type Meta = {
-  timeToShowQuestion: number;
-  timeToCompleteQuestion: string;
-  videoDuration: number;
-};
 
 type Question = {
   id: number;
   question: string;
-  options: OptionsType[];
+  options: string[];
   type: 'mcq' | 'multi-select';
-  meta?: Meta;
+  timeline: number;
   closeable: boolean;
 };
 
@@ -98,30 +92,59 @@ const dummyVideoData: VideoData = {
   videoThumbnail:
     'https://imageuploads.blr1.digitaloceanspaces.com/DLVBC_instructor/education-66f191cf3dd22067291911e9-WhatsApp Image 2024-09-02 at 11.27.43.jpeg',
   videoTitle: 'Sample Educational Video',
-  videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+  // videoUrl: 'https://www.youtube.com/watch?v=qxhDQFr_RPE',
+  videoUrl:'https://www.w3schools.com/html/mov_bbb.mp4',
   isSubmitSingleEveryTime: true,
   videoResources: [
-    "https://imageuploads.blr1.digitaloceanspaces.com/DLVBC_instructor/education-66f4f3fe3dd2206729191205-SBIN_2024-09-20_16-08-41.png"
+    'https://pdfobject.com/pdf/sample.pdf',
+    'https://pdfobject.com/pdf/sample.doc',
+    'https://pdfobject.com/pdf/sample.png',
   ],
   questions: [
     {
       id: 1,
       question: 'What is the color of the sky?',
-      options: [{ text: 'Blue' }, { text: 'Green' }, { text: 'Red' }],
+      options: ['Blue', 'Green', 'Red'],
       type: 'mcq',
-      meta: { timeToShowQuestion: 5, timeToCompleteQuestion: '5', videoDuration: 10 },
+      timeline: 5,
       closeable: false,
     },
     {
       id: 2,
       question: 'Which animals are mammals?',
-      options: [{ text: 'Dog' }, { text: 'Fish' }, { text: 'Cat' }],
+      options: ['Dog', 'Fish', 'Cat'],
       type: 'multi-select',
-      meta: { timeToShowQuestion: 13, timeToCompleteQuestion: '10', videoDuration: 15 },
+      timeline: 13,
       closeable: true,
     },
+    {
+      id: 3,
+      question: 'Which animals are mammals?',
+      options: ['Dog', 'Fish', 'Cat'],
+      type: 'multi-select',
+      timeline: 14,
+      closeable: true,
+    },
+    {
+      id: 4,
+      question: 'Which animals are mammals?',
+      options: ['Dog', 'Fish', 'Cat'],
+      type: 'multi-select',
+      timeline: 15,
+      closeable: true,
+    },
+    {
+      id: 5,
+      question: 'Which animals are mammals?',
+      options: ['Dog', 'Fish', 'Cat'],
+      type: 'multi-select',
+      timeline: 34,
+      closeable: true,
+    },
+    
   ],
 };
+
 const VideoWithQuestions = () => {
   const params = useParams();
   const { videoId } = params;
@@ -210,7 +233,7 @@ const VideoWithQuestions = () => {
   const handleQuestionPopup = (current: number) => {
     if (videoData && !isVideoEnded) {
       const question = videoData.questions.find(
-        (q) => q.meta?.timeToShowQuestion === current && !answeredQuestions.has(q.id)
+        (q) => q.timeline === current && !answeredQuestions.has(q.id)
       );
       if (question) {
         setCurrentQuestion(question);
@@ -251,7 +274,7 @@ const VideoWithQuestions = () => {
 
     if (videoData) {
       const outOfRangeQuestion = videoData.questions.find(
-        (q) =>  (q.meta?.timeToShowQuestion || 0) > currentTime && !answeredQuestions.has(q.id)
+        (q) => q.timeline > currentTime && !answeredQuestions.has(q.id)
       );
 
       if (outOfRangeQuestion) {
@@ -409,12 +432,12 @@ const VideoWithQuestions = () => {
                   <input
                     type={currentQuestion.type === 'mcq' ? 'radio' : 'checkbox'}
                     name="answers"
-                    value={option?.text}
-                    checked={selectedAnswers.includes(option?.text)}
-                    onChange={() => handleAnswerSelect(option?.text)}
+                    value={option}
+                    checked={selectedAnswers.includes(option)}
+                    onChange={() => handleAnswerSelect(option)}
                     className="mr-2"
                   />
-                  <label>{option?.text}</label>
+                  <label>{option}</label>
                 </div>
               ))}
             </div>

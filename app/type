@@ -1,0 +1,23 @@
+interface Question {
+  _id: string;
+  answer: string;
+  askForExplaination: string;
+  correct: string;
+  createdAt: string;
+  explainationType: string;
+  incorrect: string;
+  meta: {
+    chapterTags?: string[]; // Marked as optional
+    questionTags?: string[]; // Marked as optional
+    timeToCompleteQuestion: string;
+    timeToShowQuestion: number;
+    videoDuration: number;
+  };
+  options?: { image: string; text: string }[];
+  question: { image: string; text: string };
+  questionLevel: string;
+  questionType: string;
+  status: number;
+  fill?: { box: string; type: string }; // Optional property
+  videoId: string;
+}
